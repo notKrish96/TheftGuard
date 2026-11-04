@@ -4,6 +4,10 @@ A personal anti-theft app for Android 16+, written in Kotlin with zero runtime d
 
 If someone steals the phone, TheftGuard makes it hard to switch off, sounds a loud alarm, and texts your emergency contacts the phone's location and IMEIs.
 
+[![TheftGuard demo video: click to play](docs/theftguard-demo.jpg)](docs/theftguard-demo.mp4)
+
+▶ **[Watch the 21-second demo](docs/theftguard-demo.mp4)** (with sound)
+
 ## Features
 
 | | What it does |
