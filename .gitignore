@@ -1,0 +1,14 @@
+.gradle/
+build/
+/local.properties
+.idea/
+*.iml
+.DS_Store
+captures/
+*.apk
+*.keystore
+*.jks
+# raw recorder logs contain on-screen text from the phone: never publish
+recordings/*.log
+# local working notes
+CLAUDE.md

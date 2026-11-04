@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The manifest is the app's contract with Android: which components exist,
+  who may start them, and what permissions they need.
+  Pentest habit: this is the first file you read when auditing any APK.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Alarm: vibrate along with the siren. A "normal" permission: granted at install, no prompt. -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!--
+      Phase 3: SMS alert. These are "dangerous" permissions: you grant them in
+      a prompt, and can revoke them in Settings any time.
+       SEND_SMS          : text your emergency contacts. Google Play restricts
+                           this permission; fine for a sideloaded personal app.
+       READ_PHONE_STATE  : pick the right SIM on a dual-SIM phone.
+       FINE / COARSE     : GPS location.
+       BACKGROUND        : location while TheftGuard isn't on screen
+                           ("Allow all the time"), granted on a separate screen.
+       WAKE_LOCK (normal): keep the CPU awake between live-location updates.
+    -->
+    <uses-permission android:name="android.permission.SEND_SMS" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Hide other apps' overlay windows while TheftGuard's screen is open (anti-tapjacking). Normal permission. -->
+    <uses-permission android:name="android.permission.HIDE_OVERLAY_WINDOWS" />
+
+    <!--
+      Package visibility (Android 11+): apps can't see other apps unless they
+      say which ones. The universal detector reads SystemUI's translated
+      "Power off" / "Restart" labels, so it needs to see SystemUI.
+    -->
+    <queries>
+        <package android:name="com.android.systemui" />
+    </queries>
+
+    <!--
+      allowBackup=false + dataExtractionRules: nothing in our private storage
+      (later: PIN hash, contacts, IMEIs) can be pulled out through adb backup,
+      Google cloud backup, or a device-to-device transfer.
+    -->
+    <application
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:icon="@android:drawable/ic_lock_idle_lock"
+        android:label="@string/app_name"
+        android:theme="@android:style/Theme.DeviceDefault.DayNight">
+
+        <!-- exported=true only because the launcher must be able to open it. -->
+        <activity
+            android:name=".ui.MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!--
+          The accessibility service. In Phase 0 it only RECORDS power-menu events;
+          in Phase 1 it becomes the shutdown gate.
+
+          exported=true is required so the system can bind to it, but the
+          BIND_ACCESSIBILITY_SERVICE permission means only the system can.
+          Without that permission attribute, any app could bind to our service —
+          a classic finding in Android app audits.
+        -->
+        <!--
+          directBootAware=true: Android may start this service right after a
+          restart, BEFORE the first unlock (it then only sees device-protected
+          storage; see Storage.kt). Without it, the gate was off until you
+          unlocked once, which is exactly when a thief has the restarted phone.
+        -->
+        <service
+            android:name=".gate.PowerGateService"
+            android:directBootAware="true"
+            android:exported="true"
+            android:label="@string/gate_service_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/power_gate_service" />
+        </service>
+
+        <!--
+          Device admin (Phase 2): receives wrong/right lock-screen attempts.
+          permission=BIND_DEVICE_ADMIN means only the system can send to it.
+          directBootAware so wrong attempts are caught right after a restart too.
+        -->
+        <receiver
+            android:name=".admin.TheftGuardAdminReceiver"
+            android:directBootAware="true"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_DEVICE_ADMIN">
+            <meta-data
+                android:name="android.app.device_admin"
+                android:resource="@xml/device_admin" />
+            <intent-filter>
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

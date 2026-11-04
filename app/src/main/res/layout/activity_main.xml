@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Plain Views (decision D1): standard platform widgets in one scrolling column. -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="TheftGuard"
+            android:textAppearance="@android:style/TextAppearance.DeviceDefault.Large" />
+
+        <TextView
+            android:id="@+id/status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:lineSpacingExtra="4dp"
+            android:textAppearance="@android:style/TextAppearance.DeviceDefault.Medium" />
+
+        <!-- Shutdown gate -->
+        <TextView
+            style="@android:style/TextAppearance.DeviceDefault.Medium"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Power-off gate"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btnAccessibility"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Open accessibility settings" />
+
+        <Button
+            android:id="@+id/btnSetPin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Set TheftGuard PIN" />
+
+        <Switch
+            android:id="@+id/gateSwitch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Ask for PIN before power off / restart" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="#33FFB300"
+            android:padding="10dp"
+            android:text="⚠ Limitation: holding Side + Volume down for about 7 seconds force-restarts the phone. That happens in the phone's firmware, below Android, so no app can block it. The gate only covers the on-screen power menu (side key and quick panel)." />
+
+        <!-- Wrong-attempt alarm (Phase 2) -->
+        <TextView
+            style="@android:style/TextAppearance.DeviceDefault.Medium"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Wrong-attempt alarm"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="3 wrong lock-screen PINs, or 3 wrong TheftGuard PINs, start a loud siren at full volume. Only a PIN stops it: your TheftGuard PIN, or your lock-screen PIN. Fingerprint and face unlock do not." />
+
+        <Button
+            android:id="@+id/btnAdmin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Activate device admin" />
+
+        <Button
+            android:id="@+id/btnTestAlarm"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🔊 Test alarm (3 s, very loud)" />
+
+        <!-- SMS alert (Phase 3) -->
+        <TextView
+            style="@android:style/TextAppearance.DeviceDefault.Medium"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="SMS alert &amp; live location"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="When the alarm starts, or someone starts a force restart, TheftGuard texts your emergency contacts the phone's location, both IMEIs and the battery level. While the alarm stays on, it sends live location every 3 minutes if the phone moves. Normal SMS charges apply." />
+
+        <Button
+            android:id="@+id/btnContacts"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Emergency contacts &amp; IMEIs" />
+
+        <Button
+            android:id="@+id/btnPerms"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Grant SMS &amp; location permissions" />
+
+        <Button
+            android:id="@+id/btnTestSms"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="✉ Send test SMS" />
+
+        <!-- Debug tools: hidden (and disabled in code) in release builds -->
+        <LinearLayout
+            android:id="@+id/debugSection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Debug: Phase 0 recorder -->
+            <TextView
+                style="@android:style/TextAppearance.DeviceDefault.Medium"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="Debug · power-menu recorder"
+                android:textStyle="bold" />
+
+            <Switch
+                android:id="@+id/quietTestSwitch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Quiet test mode (no siren, live location every 4 s, max 3, SMS marked [TEST])" />
+
+            <Switch
+                android:id="@+id/recordSwitch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Record power-menu events" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btnMark"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Add marker" />
+
+                <Button
+                    android:id="@+id/btnClear"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Clear log" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/logView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:textIsSelectable="true"
+                android:textSize="11sp" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

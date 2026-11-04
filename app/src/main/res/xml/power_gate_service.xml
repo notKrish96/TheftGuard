@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Tells Android what our accessibility service wants to see.
+
+  typeWindowStateChanged : a new window / dialog appeared (the power menu should fire this)
+  typeWindowsChanged     : the list of on-screen windows changed (catches overlays that
+                           don't fire a state change)
+  flagRetrieveInteractiveWindows : lets us list every window, incl. SystemUI ones
+  flagReportViewIds      : gives us resource IDs like "com.android.systemui:id/global_actions_..."
+                           — the most stable thing to match on later
+  flagIncludeNotImportantViews : don't hide layout containers from us; the power menu's
+                           root container is often marked "not important for accessibility"
+  canRetrieveWindowContent : we may read the view tree, not just receive events
+
+  isAccessibilityTool=false: we are honest that this is not a screen reader etc.
+  (Under Android 17 Advanced Protection this means the service will be blocked — see PLAN.md 2.2.)
+-->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeWindowStateChanged|typeWindowsChanged"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagRetrieveInteractiveWindows|flagReportViewIds|flagIncludeNotImportantViews"
+    android:canRetrieveWindowContent="true"
+    android:description="@string/gate_service_description"
+    android:isAccessibilityTool="false"
+    android:notificationTimeout="0" />

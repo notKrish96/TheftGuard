@@ -1,0 +1,5 @@
+# Shell script must keep Unix line endings, or ./gradlew breaks on Linux/macOS
+* text=auto
+gradlew text eol=lf
+*.bat text eol=crlf
+*.jar binary

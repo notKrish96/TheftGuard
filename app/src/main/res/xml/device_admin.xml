@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The device-admin policies TheftGuard asks for. Deliberately minimal:
+   watch-login : get told about failed lock-screen attempts (onPasswordFailed),
+                 and read how many have happened in a row
+   force-lock  : lock the screen immediately (lockNow), for later phases
+  No wipe, no password rules, no camera control. Ask for the least you need.
+-->
+<device-admin>
+    <uses-policies>
+        <watch-login />
+        <force-lock />
+    </uses-policies>
+</device-admin>

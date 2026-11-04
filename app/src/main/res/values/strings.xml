@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">TheftGuard</string>
+    <string name="gate_service_label">TheftGuard power gate</string>
+    <string name="gate_service_description">Watches for the system power menu so TheftGuard can ask for your TheftGuard PIN before the phone is switched off or restarted. It only looks at system screens and never sends anything off the phone.</string>
+</resources>

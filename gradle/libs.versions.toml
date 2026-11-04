@@ -1,0 +1,13 @@
+# Version catalog: every dependency and plugin version in one file.
+# Keep this list short — each line here is code we trust but didn't write.
+
+[versions]
+agp = "9.5.0"        # Android Gradle Plugin, Oct 2026. Supports up to API 37. Needs Gradle 9.6+, JDK 17+.
+junit = "4.13.2"     # unit tests only, never shipped in the APK
+
+[libraries]
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+
+[plugins]
+# AGP 9 compiles Kotlin itself ("built-in Kotlin"), so no separate Kotlin plugin is needed.
+android-application = { id = "com.android.application", version.ref = "agp" }
