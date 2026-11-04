@@ -37,5 +37,4 @@ Requirements: Android SDK with platform 37, JDK 17+.
 
 - [PLAN.md](PLAN.md): design and build phases
 - [SECURITY.md](SECURITY.md): threat model, review findings, residual risks
-- [FAILURES.md](FAILURES.md): what didn't work, and why
 - [recordings/FINDINGS.md](recordings/FINDINGS.md): power-menu signatures per phone
