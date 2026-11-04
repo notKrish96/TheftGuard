@@ -12,3 +12,5 @@ captures/
 recordings/*.log
 # local working notes
 CLAUDE.md
+# private failure log (kept local, removed from GitHub by Krish 2026-11-05)
+FAILURES.md
