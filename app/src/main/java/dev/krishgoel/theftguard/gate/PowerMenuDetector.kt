@@ -1,6 +1,7 @@
 package dev.krishgoel.theftguard.gate
 
 import android.accessibilityservice.AccessibilityService
+import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.Context
 import android.content.res.Resources
 import android.os.SystemClock
@@ -89,7 +90,17 @@ object UniversalPowerMenuDetector : PowerMenuDetector {
             else -> null
         }
 
+    /**
+     * Signals 2 and 3 need to read other windows. In minimal-access mode
+     * (canRetrieveWindowContent=false, see power_gate_service.xml) we skip
+     * them and rely on signal 1, the class name.
+     */
+    fun canReadWindows(service: AccessibilityService): Boolean =
+        (service.serviceInfo?.capabilities ?: 0) and
+            AccessibilityServiceInfo.CAPABILITY_CAN_RETRIEVE_WINDOW_CONTENT != 0
+
     override fun findMenuOnScreen(service: AccessibilityService): Int? {
+        if (!canReadWindows(service)) return null
         if (verdicts.size > 256) { verdicts.clear(); firstSeen.clear() }
         val now = SystemClock.uptimeMillis()
         val byDisplay = service.windowsOnAllDisplays          // Fold: both screens

@@ -46,6 +46,26 @@ Reviewed 2026-11-05. Scope: every component, permission, stored value, log line 
 - **SMS** goes only to the numbers you saved; masked (`…1234`) in logs.
 - **Minimal permissions**: no internet, no contacts/storage access, no camera/mic. The device admin asks only for watch-login + force-lock.
 
+## Banking apps and the payment pause (2026-11-05)
+
+Banking and UPI apps (Paytm, tested) refuse to run while **any** third-party accessibility service is on. A minimal-access TheftGuard (SystemUI events only, no screen-content access) was still refused. That check exists because banking malware abuses accessibility. TheftGuard will **not** hide from it or claim to be an accessibility tool. That would be malware behaviour.
+
+Instead, there's **Pause for payments** (in-app button or the "Pay mode" quick-settings tile):
+- needs the TheftGuard PIN (and the tile needs an unlocked phone);
+- switches the gate off with `disableSelf()`, with no tamper SMS for this intentional pause;
+- **resumes automatically after 10 min or the moment the screen locks**, with a backup alarm and a boot check, so a pause never outlives a restart;
+- the wrong-PIN alarm and SMS alerts keep working while paused.
+
+**Auto-resume** needs `WRITE_SECURE_SETTINGS`, which apps can't request; it's granted once over USB:
+
+```bash
+adb shell pm grant dev.krishgoel.theftguard android.permission.WRITE_SECURE_SETTINGS
+```
+
+On **OnePlus/OxygenOS** (and other ColorOS-based phones) the grant is rejected until Developer options → **"Disable permission monitoring"** is on. It can be switched off again afterwards; the grant stays. Verified on the OnePlus 12R, 2026-11-06.
+
+TheftGuard uses it only to add **its own** component back to the enabled-services list. Without it, the user gets a persistent "turn TheftGuard back on" notification instead.
+
 ## Residual risks (can't be fixed by an app)
 
 - **Hardware force restart** (Samsung ~7 s Side + Volume down, OnePlus ~10 s Power + Volume Up): can't be blocked; mitigated by the warning SMS, after-boot detection and alarm resume.

@@ -60,6 +60,18 @@
             android:padding="10dp"
             android:text="⚠ Limitation: holding Side + Volume down for about 7 seconds force-restarts the phone. That happens in the phone's firmware, below Android, so no app can block it. The gate only covers the on-screen power menu (side key and quick panel)." />
 
+        <Button
+            android:id="@+id/btnPause"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="💳 Pause for payments (10 min)" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Banking and UPI apps (e.g. Paytm) refuse to work while any accessibility service is on. Pause the gate with your PIN; it switches itself back on after 10 minutes or when you lock the screen. The alarm and SMS alerts stay on. Tip: add the &quot;Pay mode&quot; tile to Quick Settings." />
+
         <!-- Wrong-attempt alarm (Phase 2) -->
         <TextView
             style="@android:style/TextAppearance.DeviceDefault.Medium"

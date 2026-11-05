@@ -16,6 +16,7 @@ If someone steals the phone, TheftGuard makes it hard to switch off, sounds a lo
 | **Wrong-attempt alarm** | 3 wrong lock-screen PINs (or 3 wrong TheftGuard PINs) start a looping siren at forced maximum volume, through the speaker, with vibration. Survives a force restart. Only a PIN stops it. |
 | **SMS alert + live location** | Texts your contacts the reason, a Google Maps link, both IMEIs and battery level, then live location every 3 minutes while the alarm runs. Works without mobile data. |
 | **Force-restart warning** | A power-off attempt on a locked phone is texted immediately; if the phone is then force-restarted, the next boot detects it and starts the alarm. |
+| **Pause for payments** | Banking/UPI apps refuse to run while any accessibility service is on. A PIN-protected "Pay mode" tile pauses the gate; it switches itself back on after 10 minutes or when the screen locks. The alarm and SMS alerts stay on. |
 | **Tamper alerts** | Switching off the accessibility service or device admin texts your contacts. |
 
 Power-menu detection is universal: SystemUI's `GlobalActions` window class, or a system window showing both "Power off" and "Restart", read in the phone's own language. Tested on a Galaxy S23 FE (One UI 8.5) and a OnePlus 12R (OxygenOS 16).

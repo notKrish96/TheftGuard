@@ -12,6 +12,7 @@ import android.view.accessibility.AccessibilityWindowInfo
 import dev.krishgoel.theftguard.admin.TheftGuardAdminReceiver
 import dev.krishgoel.theftguard.alarm.AlarmController
 import dev.krishgoel.theftguard.alert.AlertSender
+import dev.krishgoel.theftguard.pause.PauseController
 import dev.krishgoel.theftguard.security.PinStore
 
 /**
@@ -64,6 +65,7 @@ class PowerGateService : AccessibilityService() {
     private val lastDumped = HashMap<Int, String>()
 
     override fun onServiceConnected() {
+        instance = this
         detector = PowerMenuDetector.forThisDevice()
         pinStore = PinStore(this)
         // Build the PIN pad once, now, so showing it later costs only an addView.
@@ -82,6 +84,10 @@ class PowerGateService : AccessibilityService() {
         )
         // Forced restart while the alarm was sounding? Start it again.
         AlarmController.resumeIfActive(this)
+        // Back on (automatically, or the user switched it on early): any payment
+        // pause is over, and the "turn it back on" reminder can go.
+        PauseController.onServiceBack(this)
+        if (PauseController.isPaused(this)) PauseController.resume(this, "gate switched back on")
         // Or force-restarted right after a power-off attempt on the locked phone?
         if (PowerAttempt.consumeForcedRestart(this) && !AlarmController.isActive(this)) {
             EventRecorder.line(this, "ATTEMPT: this boot followed a power-off attempt: forced restart")
@@ -113,7 +119,10 @@ class PowerGateService : AccessibilityService() {
 
         // Did the menu you unlocked just close (you pressed Back)? Then the
         // allowance ends right now, and the next power menu needs the PIN again.
-        if (event.eventType == AccessibilityEvent.TYPE_WINDOWS_CHANGED) {
+        // (Only possible when we may list windows. In minimal-access mode the
+        // allowance simply stays tied to that one window ID; every new power
+        // menu is a new window, so it still needs the PIN.)
+        if (event.eventType == AccessibilityEvent.TYPE_WINDOWS_CHANGED && UniversalPowerMenuDetector.canReadWindows(this)) {
             GateState.claimedWindowId()?.let { if (!isWindowOnScreen(it)) GateState.revoke() }
         }
 
@@ -235,9 +244,26 @@ class PowerGateService : AccessibilityService() {
      * that setting on an UNLOCKED phone.)
      */
     override fun onUnbind(intent: android.content.Intent?): Boolean {
-        EventRecorder.line(this, "TAMPER: accessibility service switched off")
-        AlertSender.alert(this, REASON_SERVICE_OFF)
+        instance = null
+        if (PauseController.pausingOnPurpose) {
+            // A PIN-confirmed payment pause, not tampering: no alert.
+            PauseController.pausingOnPurpose = false
+            EventRecorder.line(this, "PAUSE: gate switched off for a payment pause")
+        } else {
+            EventRecorder.line(this, "TAMPER: accessibility service switched off")
+            AlertSender.alert(this, REASON_SERVICE_OFF)
+        }
         return super.onUnbind(intent)
+    }
+
+    /**
+     * Payment pause: switch our own accessibility service off. disableSelf()
+     * is the one supported way for a service to do that (Android 7+); it's
+     * as if the user flipped the switch in Settings.
+     */
+    fun pauseSelf() {
+        if (::overlay.isInitialized) overlay.close()
+        disableSelf()
     }
 
     override fun onDestroy() {
@@ -335,8 +361,11 @@ class PowerGateService : AccessibilityService() {
         else -> "TYPE_$t"
     }
 
-    private companion object {
-        val RETRY_DELAYS_MS = longArrayOf(120L, 350L)
+    companion object {
+        /** The running service, if any (for the payment pause). Cleared in onUnbind. */
+        @Volatile var instance: PowerGateService? = null
+
+        private val RETRY_DELAYS_MS = longArrayOf(120L, 350L)
         const val DEBOUNCE_MS = 1_000L
         // Short on purpose: each alert must fit one SMS (see AlertMessage).
         const val REASON_ATTEMPT = "power-off try while locked"

@@ -4,7 +4,8 @@
   who may start them, and what permissions they need.
   Pentest habit: this is the first file you read when auditing any APK.
 -->
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Alarm: vibrate along with the siren. A "normal" permission: granted at install, no prompt. -->
     <uses-permission android:name="android.permission.VIBRATE" />
@@ -28,6 +29,23 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <!-- Hide other apps' overlay windows while TheftGuard's screen is open (anti-tapjacking). Normal permission. -->
     <uses-permission android:name="android.permission.HIDE_OVERLAY_WINDOWS" />
+
+    <!--
+      Payment pause (pause/PauseController):
+       FOREGROUND_SERVICE(_SPECIAL_USE): the short "paused" service (max 10 min).
+       POST_NOTIFICATIONS: "paused until …" and "turn TheftGuard back on".
+       RECEIVE_BOOT_COMPLETED: a pause never survives a restart.
+       WRITE_SECURE_SETTINGS: lets TheftGuard switch ITS OWN accessibility
+         service back on after a pause. Apps can't request it; only a
+         one-time `adb shell pm grant` gives it. Without it, the user is asked
+         to switch the service on by hand. We only ever add our own component.
+    -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"
+        tools:ignore="ProtectedPermissions" />
 
     <!--
       Package visibility (Android 11+): apps can't see other apps unless they
@@ -107,5 +125,38 @@
                 <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
             </intent-filter>
         </receiver>
+
+        <!-- Payment pause: the short foreground service (not exported: only we start it). -->
+        <service
+            android:name=".pause.PauseService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Keeps anti-theft alarm alive during a user-requested, PIN-confirmed 10-minute pause of the accessibility gate for banking apps" />
+        </service>
+
+        <!-- Ends a pause from the backup timer, or after a restart. Not exported. -->
+        <receiver
+            android:name=".pause.ResumeReceiver"
+            android:directBootAware="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- "Pay mode" quick-settings tile. Only the system UI can bind it. -->
+        <service
+            android:name=".pause.PauseTileService"
+            android:exported="true"
+            android:icon="@android:drawable/ic_lock_idle_lock"
+            android:label="Pay mode"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
     </application>
 </manifest>

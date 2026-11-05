@@ -32,6 +32,7 @@ import dev.krishgoel.theftguard.gate.EventRecorder
 import dev.krishgoel.theftguard.gate.GateState
 import dev.krishgoel.theftguard.gate.PowerGateService
 import dev.krishgoel.theftguard.gate.PowerMenuDetector
+import dev.krishgoel.theftguard.pause.PauseController
 import dev.krishgoel.theftguard.security.KeystoreMac
 import dev.krishgoel.theftguard.security.PinHasher
 import dev.krishgoel.theftguard.security.PinStore
@@ -176,6 +177,59 @@ class MainActivity : Activity() {
             EventRecorder.clear(this)
             refresh()
         }
+
+        // ── Payment pause ──
+        findViewById<Button>(R.id.btnPause).setOnClickListener {
+            if (PauseController.isPaused(this)) {
+                PauseController.resume(this, "resumed in app")
+                refresh()
+            } else askPause()
+        }
+        handlePauseIntent(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handlePauseIntent(intent)
+    }
+
+    /** The "Pay mode" quick-settings tile opens us with ACTION_PAUSE. */
+    private fun handlePauseIntent(i: Intent?) {
+        if (i?.action == ACTION_PAUSE) {
+            i.action = null
+            if (!PauseController.isPaused(this)) askPause()
+        }
+    }
+
+    /** Pausing turns the gate off, so it always needs the TheftGuard PIN. */
+    private fun askPause() {
+        if (!pinStore.isSet()) { toast("Set a TheftGuard PIN first"); return }
+        // Never allow a pause with no way back. Without the USB grant, TheftGuard
+        // can't switch itself on again, so the ONLY way back is the "turn it back
+        // on" notification. If notifications are blocked, refuse to pause.
+        // (Bug found 2026-11-05: the pause ended, the reminder was silently
+        // dropped, and the gate stayed off.)
+        if (!PauseController.canAutoResume(this) &&
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            AlertDialog.Builder(this)
+                .setTitle("Allow notifications first")
+                .setMessage("When the pause ends, TheftGuard has to remind you to switch the gate back on. Without notifications you'd stay unprotected without knowing it.")
+                .setPositiveButton("Allow") { _, _ ->
+                    requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), REQ_FOREGROUND)
+                }
+                .setNegativeButton("Cancel", null)
+                .showSecure()
+            return
+        }
+        confirmPin("Pause for payments") {
+            PauseController.pause(this)
+            toast(
+                if (PauseController.canAutoResume(this)) "Paused. Resumes in 10 min or when you lock the screen."
+                else "Paused. In 10 min or when you lock, you'll be asked to switch the gate back on."
+            )
+            refresh()
+        }
     }
 
     override fun onResume() {
@@ -193,6 +247,9 @@ class MainActivity : Activity() {
         gateSwitch.isChecked = gateOn
         btnSetPin.text = if (pinSet) "Change TheftGuard PIN" else "Set TheftGuard PIN"
 
+        findViewById<Button>(R.id.btnPause).text =
+            if (PauseController.isPaused(this)) "▶ Resume protection now" else "💳 Pause for payments (10 min)"
+
         val adminOn = dpm.isAdminActive(TheftGuardAdminReceiver.component(this))
         btnAdmin.isEnabled = !adminOn
         btnAdmin.text = if (adminOn) "Device admin active" else "Activate device admin"
@@ -204,6 +261,17 @@ class MainActivity : Activity() {
             appendLine("${tick(serviceOn)} Accessibility service")
             appendLine("${tick(pinSet)} TheftGuard PIN set")
             appendLine("${tick(gateOn)} Gate switched on")
+            if (PauseController.isPaused(this@MainActivity)) {
+                val until = java.time.LocalTime.ofInstant(
+                    java.time.Instant.ofEpochMilli(PauseController.pausedUntil(this@MainActivity)),
+                    java.time.ZoneId.systemDefault(),
+                ).withSecond(0).withNano(0)
+                appendLine("💳 PAUSED for payments until $until (or screen lock)")
+            }
+            appendLine(
+                if (PauseController.canAutoResume(this@MainActivity)) "✅ Auto-resume after a payment pause"
+                else "ℹ Auto-resume needs a one-time USB command (see SECURITY.md)"
+            )
             appendLine("${tick(adminOn)} Device admin (wrong-attempt alarm)")
             val contacts = AlertSettings.contacts(this@MainActivity).size
             val imeis = AlertSettings.imeis(this@MainActivity).size
@@ -275,6 +343,7 @@ class MainActivity : Activity() {
             Manifest.permission.READ_PHONE_STATE,
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.POST_NOTIFICATIONS,     // payment-pause notifications
         ).filter { checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED }
         when {
             needed.isNotEmpty() -> requestPermissions(needed.toTypedArray(), REQ_FOREGROUND)
@@ -399,9 +468,10 @@ class MainActivity : Activity() {
         return enabled.split(':').any { it.equals(ours, ignoreCase = true) }
     }
 
-    private companion object {
-        const val REQ_FOREGROUND = 1
-        const val REQ_BACKGROUND = 2
+    companion object {
+        const val ACTION_PAUSE = "dev.krishgoel.theftguard.PAUSE"
+        private const val REQ_FOREGROUND = 1
+        private const val REQ_BACKGROUND = 2
     }
 
     /** Dialogs are separate windows: give each one FLAG_SECURE too. */

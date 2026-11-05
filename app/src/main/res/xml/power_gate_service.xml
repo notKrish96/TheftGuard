@@ -1,19 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Tells Android what our accessibility service wants to see.
+  What our accessibility service asks Android for.
 
-  typeWindowStateChanged : a new window / dialog appeared (the power menu should fire this)
-  typeWindowsChanged     : the list of on-screen windows changed (catches overlays that
-                           don't fire a state change)
-  flagRetrieveInteractiveWindows : lets us list every window, incl. SystemUI ones
-  flagReportViewIds      : gives us resource IDs like "com.android.systemui:id/global_actions_..."
-                           — the most stable thing to match on later
-  flagIncludeNotImportantViews : don't hide layout containers from us; the power menu's
-                           root container is often marked "not important for accessibility"
-  canRetrieveWindowContent : we may read the view tree, not just receive events
+  typeWindowStateChanged : a new window / dialog appeared (the power menu fires this)
+  typeWindowsChanged     : the window list changed (arrives ~75 ms earlier: our fastest signal)
+  flagRetrieveInteractiveWindows : list on-screen windows, so we can find SYSTEM windows
+  flagReportViewIds      : view IDs like "com.android.systemui:id/sec_global_actions_item_list"
+  flagIncludeNotImportantViews : don't hide layout containers (the power menu's root often is one)
+  canRetrieveWindowContent : read SYSTEM windows' labels ("Power off" + "Restart"), the
+                           universal detector's language-independent signal
+
+  The detector only ever looks at focused TYPE_SYSTEM windows (SystemUI); app windows
+  are skipped before anything is read.
+
+  Note (2026-11-05): a minimal-access version (SystemUI events only, no content
+  access) was tried. Paytm STILL refused payments: it blocks any third-party
+  accessibility service. So minimal access bought nothing and cost the
+  universal label detection. The answer to banking apps is the PIN-protected
+  "Pause for payments" (pause/PauseController), not less access.
 
   isAccessibilityTool=false: we are honest that this is not a screen reader etc.
-  (Under Android 17 Advanced Protection this means the service will be blocked — see PLAN.md 2.2.)
+  (Under Android 17 Advanced Protection the service is blocked; see PLAN.md 2.2.)
 -->
 <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
     android:accessibilityEventTypes="typeWindowStateChanged|typeWindowsChanged"
