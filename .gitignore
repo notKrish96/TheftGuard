@@ -10,10 +10,6 @@ captures/
 *.jks
 # raw recorder logs contain on-screen text from the phone: never publish
 recordings/*.log
-# local working notes
-CLAUDE.md
-# private failure log (kept local, removed from GitHub by Krish 2026-11-05)
-FAILURES.md
 
 # release signing secrets (template: keystore.properties.example)
 keystore.properties

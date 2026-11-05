@@ -8,6 +8,8 @@ If someone steals the phone, TheftGuard makes it hard to switch off, sounds a lo
 
 ▶ **[Watch the 21-second demo](docs/theftguard-demo.mp4)** (with sound)
 
+⬇ **[Download the latest APK](https://github.com/notKrish96/TheftGuard/releases/latest)** (Android 16+). Install steps and checksums are in the release notes.
+
 ## Features
 
 | | What it does |
