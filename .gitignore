@@ -14,3 +14,6 @@ recordings/*.log
 CLAUDE.md
 # private failure log (kept local, removed from GitHub by Krish 2026-11-05)
 FAILURES.md
+
+# release signing secrets (template: keystore.properties.example)
+keystore.properties
